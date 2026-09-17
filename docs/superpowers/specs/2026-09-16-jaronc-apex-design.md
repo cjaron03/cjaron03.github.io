@@ -125,6 +125,7 @@ deliberate.
 ```
 <h1>Jaron Cabral</h1>
 lede
+facts strip
 four project rows
 footer
 ```
@@ -132,8 +133,24 @@ footer
 Above the rows, a monospace top line: the name on the left, `WORK, 2025 TO
 2026` on the right.
 
-**Lede:** "I build software systems. Four of them are below, with the part
-of each that was actually hard."
+**Lede:** "I build the parts of a system that do not have a library yet. **A
+game engine simulating a planet dying, a forecaster that has to admit when
+it is wrong, and a gallery that runs with the internet unplugged.**"
+
+The second sentence is the whole page in one line, and it is emphasised
+because it is the part a reader skimming for ten seconds should catch. The
+three clauses map, in order, onto rows one, two and three.
+
+### The facts strip
+
+A single monospace line under the lede, above a hairline rule, carrying the
+things a recruiter scans for and nothing else: `4 PROJECTS`, `706 COMMITS`,
+the languages, the runtime stack, and `2025 TO 2026`. Numbers are in the ink
+colour, labels are dim.
+
+This is deliberately a line of text and not a chart. It exists because
+decision 1 asks the page to be legible to someone hiring within ten seconds,
+and without it those facts are only inferable by reading four rows.
 
 ### The four projects
 
@@ -144,6 +161,12 @@ lowers the average rather than raising the count.
 Each row carries name, what it is, what was hard, stack, live count, and a
 link to GitHub. Frozen Dawn additionally links to the journal and is marked
 with the accent dot.
+
+Both sentences render, not just the first. The second is prefixed with a
+bolded "The hard part." and set a step dimmer, so the row reads as a claim
+and then its evidence. Two lines per row is also what stops four rows from
+leaving half a viewport empty; a row is about 105px, and four of them plus
+the header block and the footer fill a laptop screen with no scroll.
 
 **1. Frozen Dawn** &middot; Java, NeoForge &middot; 553
 
@@ -190,12 +213,17 @@ Links: `github.com/cjaron03/Heart-Disease-Predictor`
 
 ### Footer
 
-GitHub profile and the journal link. **No email address for now**; the slot
-exists in the markup and stays empty until one is chosen.
+Pushed to the bottom of the viewport with `margin-top:auto` inside a flex
+column, so the page closes on a line rather than trailing off into empty
+background. It carries `github.com/cjaron03` and `frozendawn.jaronc.com` on
+the left and `jaronc.com` on the right.
+
+**No email address for now**; the slot exists in the markup and stays empty
+until one is chosen.
 
 ## The row glyphs
 
-Each row carries a 152 by 46 glyph that is the actual thing the project is,
+Each row carries a 168 by 52 glyph that is the actual thing the project is,
 taken from that project's own source rather than invented.
 
 | Project | Glyph | Source |
