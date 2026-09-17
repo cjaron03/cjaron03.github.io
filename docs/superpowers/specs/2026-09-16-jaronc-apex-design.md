@@ -228,7 +228,7 @@ taken from that project's own source rather than invented.
 
 | Project | Glyph | Source |
 | --- | --- | --- |
-| Frozen Dawn | The Architect's eyes weighing three candidates in turn, returning to centre, then committing to one and holding | The mod's own three block rows at `#008CB4`, `#00D2FF`, `#005064`, matching the chapter II card on the journal |
+| Frozen Dawn | Black, then the eyes snap open and light rips out across the glyph. It looks away twice, comes back to the reader, narrows, and a second pulse goes out. Then it closes | The mod's own three block rows at `#008CB4`, `#00D2FF`, `#005064`, matching the chapter II card on the journal, and the beat chapter II opens on |
 | flare+ | A GOES X-ray flux curve across the C, M and X class lines: a long quiet band, a rise in seconds, a decay over the rest of the box, with the M line lighting as it is crossed | The `#f97316` to `#fb7185` gradient from `ui-frontend/public/favicon.svg`, on the curve the model actually reads |
 | Canvas & Clay | Three framed works on a gallery rail whose thumbnails resolve one after another | Accent `#5a9fd4` from `frontend/src/app.css` |
 | Heart Disease Predictor | A PQRST ECG trace with a sweep running along it | `#ef4444`, three cycles across the box |
@@ -237,17 +237,39 @@ Using the same Architect eye on both sites is deliberate: it is the one
 object that appears in the mod, the journal and the portfolio, so the three
 read as one body of work.
 
-The first two glyphs were rebuilt once. Both animated without saying
-anything: the eyes wobbled, and flare+ was an app icon beside a line that
-drew in. A glyph earns its space only if it shows what the project does, so
-the eyes now run the Architect's decision loop (look at each option, come
-back, commit), and flare+ plots the curve rather than the logo of the thing
-that plots the curve. The flare shape is a real event profile, fast rise and
-slow decay, and the draw is deliberately slow through the quiet band and
-fast through the rise, because the wait is most of the problem.
+These two were rebuilt twice, and the second pass is the one worth
+recording, because both failures were the same failure at different sizes.
 
-The app icon was dropped in that rewrite. An icon of an icon carries the
-project's colours and nothing else, and the colours survive on the curve.
+flare+ was its own app icon beside a line that drew in. An icon of an icon
+carries a project's colours and nothing else, so the icon went and the
+colours moved onto the curve the model actually reads: GOES X-ray flux
+across the C, M and X class lines, a real event profile with a fast rise and
+a slow decay. The draw crawls through the quiet band and rips through the
+rise, because the waiting is most of that problem and a constant speed hid
+it.
+
+Frozen Dawn first wobbled, then ran a literal decision loop: the eyes
+scored three small candidate blocks in turn and committed to one. That was
+accurate and still flat, because it was a diagram drawn at 10px in a corner
+of the box. What flare+ got right is amplitude. One long quiet, then a
+single gesture that crosses the whole glyph.
+
+So the eyes became the whole glyph, at 26 by 13 blocks instead of 15 by 7,
+and they run the beat the journal already opens chapter II on: black, then
+the eyes, then the blue. They snap open with an overshoot while a two pixel
+bar rips outward across all 168px. They look away twice, return to the
+reader, narrow, and fire a second pulse. Then they close and it goes dark
+again.
+
+The narrowing is the point. The first pulse is it waking up and the second
+is it deciding, and between them it stops looking around and holds on
+whoever is reading. Opening and blinking are both `scaleY`, and one element
+cannot run two animations on one property, so the eye is two nested
+elements.
+
+A reader who lands during the 0.65s dark phase sees nothing in that slot.
+That is accepted: it is 9% of a 7.2s cycle, and a thing that wakes up has
+to have been asleep.
 
 ## Performance rules
 
