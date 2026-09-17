@@ -228,7 +228,7 @@ taken from that project's own source rather than invented.
 
 | Project | Glyph | Source |
 | --- | --- | --- |
-| Frozen Dawn | Black, then the eyes snap open and light rips out across the glyph. It looks away twice, comes back to the reader, narrows, and a second pulse goes out. Then it closes | The mod's own three block rows at `#008CB4`, `#00D2FF`, `#005064`, matching the chapter II card on the journal, and the beat chapter II opens on |
+| Frozen Dawn | Black, then the eyes snap open and light rips out across the glyph. It checks what blocked it twice, comes back to the reader, stops dead and tilts while the bright band pulses, then levels, narrows, and fires a second pulse. Then it closes | The mod's own three block rows at `#008CB4`, `#00D2FF`, `#005064`, the chapter II card on the journal, and `ArchitectThinkingController` plus `ArchitectModel` for the pause and the pose |
 | flare+ | A GOES X-ray flux curve across the C, M and X class lines: a long quiet band, a rise in seconds, a decay over the rest of the box, with the M line lighting as it is crossed | The `#f97316` to `#fb7185` gradient from `ui-frontend/public/favicon.svg`, on the curve the model actually reads |
 | Canvas & Clay | Three framed works on a gallery rail whose thumbnails resolve one after another | Accent `#5a9fd4` from `frontend/src/app.css` |
 | Heart Disease Predictor | A PQRST ECG trace with a sweep running along it | `#ef4444`, three cycles across the box |
@@ -267,9 +267,43 @@ whoever is reading. Opening and blinking are both `scaleY`, and one element
 cannot run two animations on one property, so the eye is two nested
 elements.
 
-A reader who lands during the 0.65s dark phase sees nothing in that slot.
-That is accepted: it is 9% of a 7.2s cycle, and a thing that wakes up has
+A reader who lands during the 0.34s dark phase sees nothing in that slot.
+That is accepted: it is 4% of an 8.4s cycle, and a thing that wakes up has
 to have been asleep.
+
+### The pause is the thinking
+
+The loop then gained the part it was missing, and it is the only part of
+the glyph that is copied out of the mod line for line rather than
+interpreted.
+
+`ArchitectThinkingController` is what the Architect does when it stops. It
+only runs while the entity is stationary with a live target. It counts
+still ticks, and at six of them it writes `PURSUIT_PAUSE_START` with a
+cause: `TARGET_MOVED`, `PATH_SEARCH`, `OBSTRUCTION` or `ROUTE_EXECUTION`.
+For forty ticks after a route change it looks at what blocked it rather
+than at the player. At thirty two still ticks it rolls, deterministically
+off its own UUID, a one in three chance of the hand to chin pose, and rate
+limits that to once per 240 ticks.
+
+`ArchitectModel` draws the pose: `head.zRot = -0.15F * tilt`, which is
+**-8.6 degrees**, with `head.xRot` nudged forward by `0.035F`. The tilt
+eases in at `0.16` per tick, so it lands in about a third of a second.
+
+The glyph uses those numbers as written. It tilts exactly -8.6 degrees with
+a 1.5px nod, eased in over the six ticks the controller waits before it
+will call a pause a pause. The two look aways earlier in the loop are the
+route change behaviour, not decoration: it is checking what blocked it.
+
+While it is tilted the bright `#00D2FF` band pulses three times and the eye
+nearly goes out between pulses. The controller is writing decision records
+the whole time it stands there, and those pulses are those records. The
+band carries it because it is the only part of the eye the mod lights up.
+
+The mod tilts on one pause in three. The glyph tilts every cycle, because a
+mark that performed its best beat a third of the time would read as broken
+rather than as faithful. That is the one place this glyph knowingly departs
+from the source.
 
 ## Performance rules
 
