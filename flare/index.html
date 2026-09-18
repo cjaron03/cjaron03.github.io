@@ -36,6 +36,15 @@
              padding-bottom:2px; transition:color .2s, border-color .2s; }
   .f-top a:hover { color:#6ee7c8; border-color:#2c4a44; }
 
+  /* the way back up to the portfolio. this page is one project on someone
+     else's site as far as a visitor is concerned, and a visitor who arrived
+     from a link has no history to press back through. the arrow leans on
+     hover, which is the whole of the affordance. */
+  .f-top a.back, .f-foot a.back { display:inline-flex; align-items:center; gap:7px; }
+  .f-top a i, .f-foot a i { font-style:normal; display:inline-block;
+                            transition:transform .16s ease; }
+  .f-top a:hover i, .f-foot a:hover i { transform:translateX(-3px); }
+
   .f h1 { font-size:56px; line-height:1; letter-spacing:-.045em; font-weight:500;
           margin:30px 0 0; color:#fff; }
   .f-lede { max-width:38em; font-size:16px; line-height:1.62; color:#a4abba;
@@ -186,6 +195,63 @@
   .f-foot a:hover { color:#6ee7c8; border-color:#2c4a44; }
   .f-foot em { font-style:normal; margin-left:auto; color:#3b414b; }
 
+  /* ================================================================
+     motion. the page is an argument, so nothing here moves to be
+     interesting: each piece arrives as you reach the line that needs it,
+     and then stays put. the .mo class is set by a script in the head,
+     before the first paint, which is why nothing is ever drawn in place
+     and then hidden. reduced motion, or no observer, or no javascript at
+     all, and the class is never set: the page is simply the page.
+     ================================================================ */
+  @keyframes fRise { from { opacity:0; transform:translateY(14px) }
+                     to   { opacity:1; transform:none } }
+  @keyframes fIn   { from { opacity:0 } to { opacity:1 } }
+
+  .mo .f-top, .mo .f h1, .mo .f-lede, .mo .f-facts {
+    animation:fRise .66s cubic-bezier(.2,.65,.3,1) both; }
+  .mo .f-top   { animation-delay:.02s }
+  .mo .f h1    { animation-delay:.10s }
+  .mo .f-lede  { animation-delay:.18s }
+  .mo .f-facts { animation-delay:.26s }
+
+  /* a section is armed only while it is still below the fold, so arming
+     one is never something you can watch happen. */
+  .mo .rv { opacity:0; transform:translateY(16px); }
+  .mo .rv.in { animation:fRise .62s cubic-bezier(.2,.65,.3,1) both; }
+
+  /* the four withdrawn numbers are struck out in front of you rather than
+     arriving already crossed. text-decoration cannot be animated, so the
+     rule that matters is drawn as a bar of its own. */
+  /* the b is a block, and a block here is as wide as the label under it,
+     which is wider than the number. a rule drawn across the block would run
+     off the end of the figure it is meant to withdraw, so the block is
+     pulled in to the number first. */
+  .mo .gone.armed div b { text-decoration:none; position:relative; width:max-content; }
+  .mo .gone.armed div b::after { content:""; position:absolute; left:0; right:0;
+    top:53%; height:2px; background:#fb7185; transform:scaleX(0);
+    transform-origin:left center; }
+  .mo .gone.armed.in div b::after { animation:fStrike .4s cubic-bezier(.4,0,.2,1) both; }
+  .mo .gone.armed.in div:nth-child(2) b::after { animation-delay:.09s }
+  .mo .gone.armed.in div:nth-child(3) b::after { animation-delay:.18s }
+  .mo .gone.armed.in div:nth-child(4) b::after { animation-delay:.27s }
+  @keyframes fStrike { from { transform:scaleX(0) } to { transform:scaleX(1) } }
+
+  /* the empty plot draws itself left to right and then has nothing to put
+     on it, which is the entire reason it is on the page. the words arrive
+     last, once the frame has finished promising something. */
+  .mo .rel.armed svg { opacity:0; }
+  .mo .rel.armed .r-empty { opacity:0; }
+  .mo .rel.armed.in svg { animation:fWipe 1s cubic-bezier(.35,.05,.2,1) .08s both; }
+  .mo .rel.armed.in .r-empty { animation:fIn .55s ease 1.02s both; }
+  @keyframes fWipe { from { opacity:1; clip-path:inset(0 100% 0 0) }
+                     to   { opacity:1; clip-path:inset(0 0 0 0) } }
+
+  /* the flares drop through the strip in the order they happened */
+  .mo .cs-ov.armed i { opacity:0; transform:scaleY(0); transform-origin:50% 0; }
+  .mo .cs-ov.armed.in i { animation:fDrop .5s cubic-bezier(.2,.75,.3,1) both; }
+  @keyframes fDrop { from { opacity:0; transform:scaleY(0) }
+                     to   { opacity:.6; transform:none } }
+
   @media (max-width:760px) {
     .f { padding:40px 20px 0; }
     .f h1 { font-size:36px; }
@@ -203,12 +269,25 @@
   @media (prefers-reduced-motion:reduce) {
     .cs-win { transition:none; }
   }
-</style></head>
+</style>
+<script>
+  /* the motion gate, set here rather than at the end of the body so the
+     masthead is never painted in place and then hidden to be faded back in.
+     reduced motion and old browsers never get the class, and every rule and
+     every line of the motion script hangs off it. */
+  (function () {
+    var m = window.matchMedia;
+    if (m && m('(prefers-reduced-motion:reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+    document.documentElement.classList.add('mo');
+  }());
+</script>
+</head>
 <body>
 
 <div class="f">
   <div class="f-in">
-    <div class="f-top"><span>flare+ &middot; case study</span><a href="../">Jaron Cabral</a></div>
+    <div class="f-top"><a class="back" href="../"><i>&larr;</i>Jaron Cabral</a><span>flare+ &middot; case study</span></div>
     <h1>flare+</h1>
     <p class="f-lede">A solar flare forecaster built on live NOAA GOES data, and <b>the afternoon I worked out that its headline numbers were measuring the sun rather than the model.</b></p>
 
@@ -363,7 +442,7 @@ n_hits = sum(1 for m in matches if m["hit"])
     <div class="f-foot">
       <a href="https://github.com/cjaron03/flare-plus">github.com/cjaron03/flare-plus</a>
       <a href="https://github.com/cjaron03/flare-plus/pull/42">pull request 42</a>
-      <a href="../">jaronc.com</a>
+      <a class="back" href="../"><i>&larr;</i>jaronc.com</a>
       <em>flare+</em>
     </div>
   </div>
@@ -507,6 +586,78 @@ function render() {
     + (m.n - m.nw) + '</b> of ' + m.n + ' days';
 }
 render();
+
+
+/* ================================================================
+   motion. the reveals, the count and the strike. the .mo class was set
+   in the head before the first paint; if it is not there then reduced
+   motion is on, or there is no observer, and this whole block stands
+   down and leaves a page that was already complete without it.
+   ================================================================ */
+(function () {
+  if (!document.documentElement.classList.contains('mo')) return;
+  var vh = window.innerHeight || 800;
+
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    });
+     /* a threshold in area cannot be relied on here: a section tall enough
+        to outrun the viewport never reaches a fraction of its own height, so
+        the trigger is the top edge crossing the last tenth of the screen. */
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0 });
+
+  /* arm only what is still below the fold. hiding something the reader can
+     already see, in order to fade it back in, is the one way a reveal comes
+     out worse than no reveal at all. */
+  function arm(el, cls) {
+    if (!el || el.getBoundingClientRect().top < vh * 0.9) return false;
+    el.classList.add(cls);
+    io.observe(el);
+    return true;
+  }
+
+  [].forEach.call(document.querySelectorAll('.s'), function (s) { arm(s, 'rv'); });
+  arm(document.querySelector('.gone'), 'armed');
+
+  var rel = document.querySelector('.rel');
+  if (rel && arm(rel, 'armed')) {
+    /* the first text in the plot is the one that says there is nothing in it */
+    var t = rel.querySelector('svg text');
+    if (t) t.setAttribute('class', 'r-empty');
+  }
+
+  var ov = document.querySelector('.cs-ov');
+  if (ov && arm(ov, 'armed')) {
+    [].forEach.call(ov.querySelectorAll('i'), function (el, k) {
+      el.style.animationDelay = (0.05 + k * 0.045).toFixed(3) + 's';
+    });
+  }
+
+  /* the facts count in behind the masthead. each one starts at the smallest
+     number carrying the same count of digits, so the row never changes width
+     part way through and nothing under it moves. */
+  function count(b, ms, wait) {
+    var raw = b.textContent, n = parseFloat(raw.replace(/,/g, ''));
+    if (!isFinite(n)) return;
+    var from = Math.pow(10, String(Math.round(n)).length - 1);
+    if (from > n) from = 0;
+    var t0 = 0;
+    function step(t) {
+      if (!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / ms);
+      var e = 1 - Math.pow(1 - k, 3);
+      b.textContent = Math.round(from + (n - from) * e).toLocaleString('en-GB');
+      if (k < 1) requestAnimationFrame(step); else b.textContent = raw;
+    }
+    setTimeout(function () { requestAnimationFrame(step); }, wait);
+  }
+  [].forEach.call(document.querySelectorAll('.f-facts span b'), function (b, k) {
+    count(b, 760, 420 + k * 70);
+  });
+}());
 </script>
 
 </body></html>
