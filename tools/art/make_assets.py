@@ -9,7 +9,7 @@ Run from the repo root: python3 tools/art/make_assets.py
 Everything lands in assets/ and is committed, so a deploy never has to
 draw anything.
 """
-import math, random
+import math, random, re
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -30,6 +30,23 @@ MONO = "/System/Library/Fonts/SFNSMono.ttf"
 
 def font(path, size, index=0):
     return ImageFont.truetype(path, size, index=index)
+
+
+def strip():
+    """The card's stats line, read out of the page rather than written twice.
+
+    A number typed into this file is a number that has to be remembered, and
+    the tally moves every time anything is pushed. The page is the source:
+    one project row per project, and the commit total is the span the live
+    fetch overwrites, whose markup value is the count as of the last run of
+    tools/counts.py. Run that first and the card cannot disagree with the
+    page it is advertising."""
+    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    projects = len(re.findall(r'class="f-row', page))
+    m = re.search(r'<b id="c-all">(\d+)</b>', page)
+    if not projects or not m:
+        raise SystemExit("index.html has no project rows or no c-all span")
+    return projects, int(m.group(1))
 
 
 def over(rgb, a):
@@ -117,8 +134,9 @@ def card():
 
     d.line([(pad, 494 * K), (W * K - pad, 494 * K)], fill=(25, 28, 36), width=2 * K)
     m = font(MONO, 17 * K)
-    x = track(d, (pad, 522 * K), "4 PROJECTS", m, (198, 204, 216), 3.2 * K)
-    x = track(d, (x + 22 * K, 522 * K), "698 COMMITS", m, (198, 204, 216), 3.2 * K)
+    projects, commits = strip()
+    x = track(d, (pad, 522 * K), f"{projects} PROJECTS", m, (198, 204, 216), 3.2 * K)
+    x = track(d, (x + 22 * K, 522 * K), f"{commits} COMMITS", m, (198, 204, 216), 3.2 * K)
     track(d, (x + 22 * K, 522 * K), "JAVA  PYTHON  SVELTE  JUPYTER", m, DIM, 3.2 * K)
 
     r = 7 * K
