@@ -111,9 +111,9 @@ def card():
 
     lede = font(NEUE, 30 * K, REG)
     d.text((pad, 330 * K),
-           "I build the parts of a system that do not", font=lede, fill=MUTED)
+           "Mostly software.", font=lede, fill=MUTED)
     d.text((pad, 372 * K),
-           "have a library yet.", font=lede, fill=MUTED)
+           "Sometimes entire worlds.", font=lede, fill=MUTED)
 
     d.line([(pad, 494 * K), (W * K - pad, 494 * K)], fill=(25, 28, 36), width=2 * K)
     m = font(MONO, 17 * K)
