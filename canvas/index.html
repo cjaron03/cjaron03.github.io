@@ -1,0 +1,910 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canvas &amp; Clay</title>
+<meta name="description" content="A digital gallery that runs with no route to the internet, and the permission model underneath it, where holding the right role is only half of the question the server asks.">
+<link rel="canonical" href="https://jaronc.com/canvas/">
+<meta name="theme-color" content="#08090c">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/icon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../assets/icon-512.png">
+<link rel="apple-touch-icon" href="../assets/icon-180.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Jaron Cabral">
+<meta property="og:title" content="Canvas &amp; Clay, and the two questions every request has to answer">
+<meta property="og:description" content="A digital gallery that runs with no route to the internet, and the permission model underneath it, where holding the right role is only half of the question the server asks.">
+<meta property="og:url" content="https://jaronc.com/canvas/">
+<meta property="og:image" content="https://jaronc.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:#08090c; }
+
+  /* ================================================================
+     the same field the index is built from, one column, no canvas.
+     ground #08090c, ink #e8eaee. flare+ next door spends teal on
+     anything pressable; this page spends clay, because the subject is
+     a room with warm light in it and cold walls. the verdict pair is
+     kept out of that entirely: green grants, rose refuses, and neither
+     is ever used for decoration.
+     ================================================================ */
+  .f { background:#08090c; color:#e8eaee; padding:64px 60px 0; min-height:100vh;
+       display:flex; flex-direction:column;
+       font-family:"Helvetica Neue",Inter,ui-sans-serif,sans-serif; }
+  .f-in { max-width:820px; margin:0 auto; width:100%; flex:1 1 auto;
+          display:flex; flex-direction:column; }
+  .f-top { display:flex; justify-content:space-between; gap:20px;
+           font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+           letter-spacing:.17em; text-transform:uppercase; color:#5b6170; }
+  .f-top a { color:#6b7381; text-decoration:none; border-bottom:1px solid #22262f;
+             padding-bottom:2px; transition:color .2s, border-color .2s; }
+  .f-top a:hover { color:#d9946b; border-color:#4a3729; }
+
+  /* the way back up to the portfolio, same as the case study next door */
+  .f-top a.back, .f-foot a.back { display:inline-flex; align-items:center; gap:7px; }
+  .f-top a i, .f-foot a i { font-style:normal; display:inline-block;
+                            transition:transform .16s ease; }
+  .f-top a:hover i, .f-foot a:hover i { transform:translateX(-3px); }
+
+  .f h1 { font-size:56px; line-height:1; letter-spacing:-.045em; font-weight:500;
+          margin:30px 0 0; color:#fff; }
+  .f-lede { max-width:38em; font-size:16px; line-height:1.62; color:#a4abba;
+            margin:20px 0 0; }
+  .f-lede b { color:#dfe3ea; font-weight:500; }
+
+  .f-facts { margin:30px 0 0; padding:13px 0 0; border-top:1px solid #171a21;
+             display:flex; flex-wrap:wrap; gap:7px 22px;
+             font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+             letter-spacing:.11em; text-transform:uppercase; color:#5b6170; }
+  .f-facts span b { color:#c6ccd8; font-weight:500; font-variant-numeric:tabular-nums; }
+
+  /* ================================================================
+     the wall. nine frames hung under the masthead, which is the only
+     ornament on the page and the only place the warm light appears
+     without meaning something. the gallery is a room before it is a
+     schema, and the page should say so once.
+     ================================================================ */
+  .wall { margin:26px 0 0; width:100%; height:66px; display:block; }
+
+  /* ---- sections. a mono number, a rule, then the prose. ---- */
+  .s { margin:58px 0 0; padding:26px 0 0; border-top:1px solid #191c24; }
+  .s-n { font-family:ui-monospace,Menlo,monospace; font-size:10.5px; letter-spacing:.17em;
+         text-transform:uppercase; color:#4b525e; }
+  .s h2 { font-size:27px; font-weight:500; letter-spacing:-.025em; margin:11px 0 0;
+          color:#eef1f5; line-height:1.18; }
+  .s p { font-size:15px; line-height:1.68; color:#98a0ae; margin:15px 0 0; max-width:38em; }
+  .s p b { color:#cfd5df; font-weight:500; }
+  .s p a { color:#8d94a3; text-decoration:none; border-bottom:1px solid #2a2f38;
+           transition:color .2s, border-color .2s; }
+  .s p a:hover { color:#d9946b; border-color:#4a3729; }
+  .s p .hot { color:#fb7185; }
+  .s p .warm { color:#d9946b; }
+
+  /* the caption voice, used under every figure */
+  /* .s p is one class and one element, so a bare .cap loses to it and the
+     caption comes out at prose size in prose colour. the second selector
+     is only here to outrank it. */
+  .cap, .s p.cap { font-family:ui-monospace,Menlo,monospace; font-size:10.5px; line-height:1.72;
+         letter-spacing:.04em; color:#565d69; margin:12px 0 0; max-width:44em; }
+  .cap b, .s p.cap b { color:#7d8593; font-weight:400; }
+
+  /* ---- the architecture list ---- */
+  .arch { margin:24px 0 0; }
+  .arch div { display:flex; gap:20px; padding:13px 0; border-bottom:1px solid #15181e;
+              align-items:baseline; }
+  .arch div:first-child { border-top:1px solid #15181e; }
+  .arch b { flex:0 0 132px; font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+            letter-spacing:.12em; text-transform:uppercase; color:#d9946b;
+            font-weight:400; opacity:.72; }
+  .arch span { font-size:13.5px; line-height:1.6; color:#8d94a3; }
+  .arch span i { font-style:normal; font-family:ui-monospace,Menlo,monospace;
+                 font-size:11.5px; color:#a9b1bf; }
+
+  /* ---- code ---- */
+  pre { margin:22px 0 0; padding:17px 19px; background:#0b0d11; border:1px solid #191c24;
+        border-left:2px solid #d9946b; overflow-x:auto;
+        font-family:ui-monospace,Menlo,monospace; font-size:12px; line-height:1.72;
+        color:#96a0b1; }
+  pre.bad { border-left-color:#fb7185; }
+  pre b { color:#dbe0e8; font-weight:400; }
+  pre s { text-decoration:none; color:#4e5560; }
+  pre em { font-style:normal; color:#79c9a4; }
+
+  /* ================================================================
+     the widgets. three of them, one per idea, all built on the same
+     bordered panel so that pressing something always looks the same.
+     ================================================================ */
+  .w { margin:26px 0 0; padding:20px 20px 22px; border:1px solid #191c24;
+       background:#0a0c10; }
+  .w-ctl { display:flex; flex-wrap:wrap; align-items:center; gap:6px 9px; }
+  .w-ctl + .w-ctl { margin-top:9px; }
+  .w-cl { flex:0 0 74px; font-family:ui-monospace,Menlo,monospace; font-size:10px;
+          letter-spacing:.15em; text-transform:uppercase; color:#4b525e; }
+  .w-ctl button { font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+                  letter-spacing:.08em; color:#79818f; background:#0e1116;
+                  border:1px solid #1e222b; padding:5px 9px; cursor:pointer;
+                  transition:color .18s, border-color .18s, background .18s; }
+  .w-ctl button:hover { color:#c3cad6; border-color:#2a3038; }
+  .w-ctl button.on { color:#08090c; background:#d9946b; border-color:#d9946b; }
+
+  /* ---- 02, the ladder ---- */
+  .lad { margin:18px 0 0; display:flex; flex-direction:column-reverse; gap:0; }
+  .lad div { display:flex; align-items:center; gap:14px; padding:11px 13px;
+             border:1px solid #171a21; border-bottom:0; background:#0c0e13;
+             transition:background .3s, border-color .3s; }
+  .lad div:first-child { border-bottom:1px solid #171a21; }
+  .lad b { font-family:ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.14em;
+           text-transform:uppercase; color:#6b7381; flex:0 0 76px; font-weight:400;
+           transition:color .3s; }
+  .lad span { font-size:12.5px; color:#6f7787; line-height:1.55; transition:color .3s; }
+  .lad em { font-style:normal; margin-left:auto; font-family:ui-monospace,Menlo,monospace;
+            font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+            color:#3d4450; opacity:0; transition:opacity .3s; }
+  .lad div.here { background:#12100e; border-color:#3a2c22; }
+  .lad div.here b { color:#d9946b; }
+  .lad div.here span { color:#a4abba; }
+  .lad div.here em { opacity:1; color:#7a5f4a; }
+  .lad-msg { margin:14px 0 0; font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+             letter-spacing:.06em; color:#565d69; min-height:14px; }
+
+  /* ---- 03, the permission machine ---- */
+  .req { margin:20px 0 0; padding:11px 13px; background:#0d1015; border:1px solid #1a1e26;
+         font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:#8d94a3;
+         overflow-x:auto; white-space:nowrap; }
+  .req b { color:#d9946b; font-weight:400; }
+  .req s { text-decoration:none; color:#5b6170; }
+
+  .path { margin:14px 0 0; }
+  .path div { display:flex; align-items:baseline; gap:12px; padding:10px 0 10px 13px;
+              border-left:2px solid #1e222b; }
+  .path div u { text-decoration:none; flex:0 0 15px; font-family:ui-monospace,Menlo,monospace;
+                font-size:11px; color:#4b525e; }
+  .path div q { quotes:none; font-size:13px; line-height:1.55; color:#8d94a3; }
+  .path div q i { font-style:normal; font-family:ui-monospace,Menlo,monospace;
+                  font-size:11.5px; color:#a9b1bf; }
+  .path div em { font-style:normal; margin-left:auto; padding-left:14px;
+                 font-family:ui-monospace,Menlo,monospace; font-size:10px;
+                 letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .path div.pass { border-left-color:#2b4a3d; }
+  .path div.pass em { color:#79c9a4; }
+  .path div.stop { border-left-color:#5c2b35; }
+  .path div.stop em { color:#fb7185; }
+  .path div.stop q { color:#c0c6d1; }
+  .path div.skip { opacity:.42; }
+  .path div.skip em { color:#4b525e; }
+
+  .verd { margin:16px 0 0; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+          padding:13px 15px; border:1px solid #1a1e26; background:#0d1015; }
+  .verd b { font-family:ui-monospace,Menlo,monospace; font-size:15px; letter-spacing:.06em;
+            font-weight:500; font-variant-numeric:tabular-nums; }
+  .verd span { font-size:12.5px; color:#8d94a3; line-height:1.5; }
+  .verd.ok { border-color:#2b4a3d; background:#0b1310; }
+  .verd.ok b { color:#79c9a4; }
+  .verd.no { border-color:#3d2229; background:#130c0e; }
+  .verd.no b { color:#fb7185; }
+  .verd code { font-family:ui-monospace,Menlo,monospace; font-size:11px; color:#a9b1bf; }
+
+  /* ---- 04, the ownership chain ---- */
+  .hop { margin:22px 0 0; display:flex; flex-wrap:wrap; align-items:stretch; gap:0; }
+  .hop > div { flex:1 1 130px; min-width:118px; padding:13px 14px; border:1px solid #171a21;
+               border-right:0; background:#0c0e13; position:relative; }
+  .hop > div:last-child { border-right:1px solid #171a21; }
+  .hop b { display:block; font-family:ui-monospace,Menlo,monospace; font-size:10px;
+           letter-spacing:.15em; text-transform:uppercase; color:#4b525e;
+           font-weight:400; }
+  .hop span { display:block; margin-top:7px; font-size:12.5px; line-height:1.5;
+              color:#8d94a3; }
+  .hop i { font-style:normal; font-family:ui-monospace,Menlo,monospace; font-size:11px;
+           color:#d9946b; }
+  .hop > div.broke { background:#130c0e; border-color:#3d2229; }
+  .hop > div.broke b { color:#fb7185; }
+  .hop > div.broke i { color:#fb7185; }
+
+  /* ---- 05, the two ciphertexts ---- */
+  .enc { margin:20px 0 0; }
+  .enc > div { display:flex; flex-wrap:wrap; gap:4px 16px; padding:13px 0;
+               border-bottom:1px solid #15181e; }
+  .enc > div:first-child { border-top:1px solid #15181e; }
+  .enc b { flex:0 0 118px; font-family:ui-monospace,Menlo,monospace; font-size:10px;
+           letter-spacing:.14em; text-transform:uppercase; color:#4b525e; font-weight:400; }
+  .enc code { flex:1 1 300px; font-family:ui-monospace,Menlo,monospace; font-size:11.5px;
+              line-height:1.6; color:#8d94a3; word-break:break-all; }
+  .enc code.idx { color:#79c9a4; }
+  .enc code.ct { color:#a9b1bf; }
+  .enc .roll { color:#d9946b; }
+
+  /* ---- 06, the scorecard ---- */
+  .score { margin:22px 0 0; }
+  .score > div { display:flex; align-items:center; gap:14px; padding:9px 0;
+                 border-bottom:1px solid #15181e; }
+  .score > div:first-child { border-top:1px solid #15181e; }
+  .score b { flex:0 0 152px; font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+             letter-spacing:.11em; text-transform:uppercase; color:#79818f; font-weight:400; }
+  .score u { text-decoration:none; flex:1 1 auto; height:3px; background:#15181e;
+             position:relative; overflow:hidden; }
+  /* width:100% is load bearing. an absolutely positioned box with right:auto
+     and no width shrinks to its content, and the content here is nothing, so
+     without it every bar scales a zero width fill and nothing is ever drawn. */
+  .score u s { position:absolute; inset:0 auto 0 0; width:100%; text-decoration:none;
+               background:#d9946b; opacity:.62; transform-origin:left center; }
+  .score em { font-style:normal; flex:0 0 38px; text-align:right;
+              font-family:ui-monospace,Menlo,monospace; font-size:11px; color:#a9b1bf;
+              font-variant-numeric:tabular-nums; }
+  .score > div.tot b { color:#e8eaee; }
+  .score > div.tot em { color:#d9946b; }
+
+  .find { margin:24px 0 0; }
+  .find div { display:flex; gap:16px; padding:12px 0; border-bottom:1px solid #15181e;
+              align-items:baseline; }
+  .find div:first-child { border-top:1px solid #15181e; }
+  .find b { flex:0 0 46px; font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+            letter-spacing:.1em; color:#fb7185; font-weight:400; }
+  .find b.mid { color:#c89a5a; }
+  .find span { flex:1 1 auto; font-size:13.5px; line-height:1.6; color:#8d94a3; }
+  .find em { font-style:normal; flex:0 0 66px; text-align:right;
+             font-family:ui-monospace,Menlo,monospace; font-size:10px; letter-spacing:.13em;
+             text-transform:uppercase; color:#79c9a4; }
+  .find em.doc { color:#5b6170; }
+
+  /* ---- 07, the suites ---- */
+  .suites { margin:22px 0 0; display:flex; flex-wrap:wrap; gap:0; }
+  .suites div { flex:1 1 200px; min-width:180px; padding:13px 15px; border:1px solid #15181e;
+                margin:0 -1px -1px 0; background:#0a0c10; }
+  .suites b { display:block; font-family:ui-monospace,Menlo,monospace; font-size:11px;
+              color:#d9946b; font-weight:400; opacity:.8; }
+  .suites span { display:block; margin-top:6px; font-size:12.5px; line-height:1.5;
+                 color:#767e8c; }
+  .suites em { font-style:normal; color:#a9b1bf; font-variant-numeric:tabular-nums; }
+
+  .f-foot { margin-top:auto; padding:44px 0 34px; display:flex; flex-wrap:wrap;
+            gap:10px 26px; align-items:baseline;
+            font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+            letter-spacing:.12em; text-transform:uppercase; color:#454c57; }
+  .f-foot a { color:#6b7381; text-decoration:none; border-bottom:1px solid #22262f;
+              padding-bottom:2px; transition:color .2s, border-color .2s; }
+  .f-foot a:hover { color:#d9946b; border-color:#4a3729; }
+  .f-foot em { font-style:normal; margin-left:auto; color:#3b414b; }
+
+  /* ================================================================
+     motion. nothing here moves to be interesting: a piece arrives as
+     you reach the line that needs it and then stays put. the .mo class
+     is set by a script in the head, before the first paint, which is
+     why nothing is ever drawn in place and then hidden. reduced motion,
+     or no observer, or no javascript, and the class is never set: the
+     page is simply the page.
+     ================================================================ */
+  @keyframes cRise { from { opacity:0; transform:translateY(14px) }
+                     to   { opacity:1; transform:none } }
+  @keyframes cIn   { from { opacity:0 } to { opacity:1 } }
+
+  .mo .f-top, .mo .f h1, .mo .f-lede, .mo .f-facts, .mo .wall {
+    animation:cRise .66s cubic-bezier(.2,.65,.3,1) both; }
+  .mo .f-top   { animation-delay:.02s }
+  .mo .f h1    { animation-delay:.10s }
+  .mo .f-lede  { animation-delay:.18s }
+  .mo .f-facts { animation-delay:.26s }
+  .mo .wall    { animation-delay:.32s }
+
+  /* the lights come up one frame at a time, left to right, the way a
+     room does when somebody walks in and finds the switches. */
+  .mo .wall .lit { opacity:0; }
+  .mo .wall .lit { animation:cIn .5s ease both; }
+
+  /* a section is armed only while it is still below the fold, so arming
+     one is never something you can watch happen. */
+  .mo .rv { opacity:0; transform:translateY(16px); }
+  .mo .rv.in { animation:cRise .62s cubic-bezier(.2,.65,.3,1) both; }
+
+  /* the ladder builds from the bottom rung up, which is the order an
+     account travels it. */
+  .mo .lad.armed div { opacity:0; }
+  .mo .lad.armed.in div { animation:cRise .44s cubic-bezier(.2,.65,.3,1) both; }
+  .mo .lad.armed.in div:nth-child(2) { animation-delay:.09s }
+  .mo .lad.armed.in div:nth-child(3) { animation-delay:.18s }
+
+  /* the checks resolve one after another rather than all at once,
+     because the server runs them in that order and stops at the first
+     refusal. the stagger is the point, not the decoration. */
+  .mo .path div { animation:cRise .3s cubic-bezier(.2,.7,.3,1) both; }
+  .mo .verd { animation:cRise .34s cubic-bezier(.2,.7,.3,1) both; }
+
+  /* the chain resolves left to right, one hop per beat */
+  .mo .hop.armed > div { opacity:0; }
+  .mo .hop.armed.in > div { animation:cRise .42s cubic-bezier(.2,.65,.3,1) both; }
+  .mo .hop.armed.in > div:nth-child(2) { animation-delay:.11s }
+  .mo .hop.armed.in > div:nth-child(3) { animation-delay:.22s }
+  .mo .hop.armed.in > div:nth-child(4) { animation-delay:.33s }
+
+  /* the bars fill from the left, which is the only direction a score
+     can honestly be read in */
+  .mo .score.armed u s { transform:scaleX(0); }
+  .mo .score.armed.in u s { animation:cFill .8s cubic-bezier(.3,.05,.2,1) both; }
+  @keyframes cFill { from { transform:scaleX(0) } to { transform:scaleX(var(--to,1)) } }
+
+  @media (max-width:760px) {
+    .f { padding:40px 22px 0; }
+    /* the name must not break across two lines under its own underline,
+       and the label on the right reads as a label when it is flush right. */
+    .f-top { gap:14px; }
+    .f-top a.back { white-space:nowrap; }
+    .f-top span { text-align:right; }
+    .f h1 { font-size:38px; }
+    .f-lede { font-size:15px; }
+    .s { margin:44px 0 0; }
+    .s h2 { font-size:22px; }
+    .s p { font-size:14.5px; }
+    .w { padding:16px 14px 18px; }
+    .w-cl { flex:0 0 100%; margin-bottom:2px; }
+    .arch div { flex-wrap:wrap; gap:5px; }
+    .arch b { flex:0 0 100%; }
+    .enc b { flex:0 0 100%; }
+    /* the YOU ARE HERE marker breaks over three lines at this width and
+       crowds the rung it is pointing at. the highlight and the role line
+       under the ladder already say the same thing. */
+    .lad em { display:none; }
+    .score b { flex:0 0 118px; font-size:9.5px; }
+    .find div { flex-wrap:wrap; gap:6px 14px; }
+    .find em { flex:0 0 auto; margin-left:auto; }
+    .hop > div { border-right:1px solid #171a21; border-bottom:0; }
+    .hop > div:last-child { border-bottom:1px solid #171a21; }
+    .path div em { flex:0 0 100%; margin-left:0; padding-left:0; margin-top:5px; }
+    .path div { flex-wrap:wrap; }
+    .f-foot em { margin-left:0; width:100%; }
+  }
+</style>
+<script>
+  /* the motion gate, set here rather than at the end of the body so the
+     masthead is never painted in place and then hidden to be faded back
+     in. reduced motion and old browsers never get the class, and every
+     rule and every line of the motion script hangs off it. */
+  (function () {
+    var m = window.matchMedia;
+    if (m && m('(prefers-reduced-motion:reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+    document.documentElement.classList.add('mo');
+  }());
+</script>
+</head>
+<body>
+
+<div class="f">
+  <div class="f-in">
+    <div class="f-top"><a class="back" href="../"><i>&larr;</i>Jaron Cabral</a><span>Canvas &amp; Clay &middot; case study</span></div>
+    <h1>Canvas &amp; Clay</h1>
+    <p class="f-lede">A digital gallery for a building with no route to the internet, and <b>the permission model underneath it, where holding the right role is only half of the question the server asks.</b></p>
+
+    <div class="f-facts">
+      <span><b>95</b> endpoints</span>
+      <span><b>43</b> admin only</span>
+      <span><b>599</b> tests</span>
+      <span><b>13</b> tables</span>
+      <span><b>39,300</b> lines</span>
+      <span>Flask &middot; Svelte &middot; Postgres</span>
+    </div>
+
+    <svg class="wall" viewBox="0 0 820 66" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="57" x2="820" y2="57" stroke="#1a1e26" stroke-width="1"/>
+      <g id="wallFrames"></g>
+    </svg>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">01</div>
+      <h2>A gallery with no way out</h2>
+      <p>Canvas &amp; Clay runs on a network that has no route to the internet. A gallery installs it on one machine in the building, visitors browse it over the local network, and nothing it needs ever arrives from anywhere else.</p>
+      <p>That constraint is quick to say and awkward to build. Nearly every convenience a web application reaches for assumes the network is there: fonts from a content delivery network, an e-mail provider for password resets, an identity provider for the login screen, an update check on boot. All of it has to come out, and whatever replaces it has to keep working on a machine that nobody is going to administer.</p>
+      <p>So the application owns the whole stack. Its own accounts, its own sessions, its own password resets, its own file storage, its own backups and its own encryption keys. It is installed by a terminal wizard rather than a README, and the wizard ships with a repair mode, which is the honest part: installs fail, and the installer has to be able to fix itself without a person who knows what a container is.</p>
+      <div class="arch">
+        <div><b>Frontend</b><span>Svelte, roughly <i>21,500</i> lines across the routes and components</span></div>
+        <div><b>Backend</b><span>Flask, <i>95</i> endpoints over <i>17,900</i> lines of Python</span></div>
+        <div><b>Database</b><span>Postgres on an internal compose network, <i>no published port</i></span></div>
+        <div><b>Storage</b><span>Files on disk, a <i>500MB</i> quota per account, disk space checked before every write</span></div>
+        <div><b>Install</b><span>A terminal wizard, <i>setup</i> and <i>repair</i>, no manual steps</span></div>
+        <div><b>Keys</b><span>Argon2id derived from the environment, never from the source tree</span></div>
+      </div>
+      <p>Four of the thirteen tables have nothing to do with the web at all. <span class="warm">storage</span>, <span class="warm">wall_space</span>, <span class="warm">rack</span> and <span class="warm">flat_file</span> record where a piece physically is in the building, because a gallery that cannot tell you which wall a painting is on has not replaced the spreadsheet it was brought in to replace.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">02</div>
+      <h2>Three roles, and one ladder</h2>
+      <p>Most role systems are a column with a string in it and a scattering of comparisons against that string, written wherever somebody needed one. This one is a ladder, declared once, and every movement along it goes through two methods.</p>
+<pre>ROLE_LADDER = (<b>'guest'</b>, <b>'artist'</b>, <b>'admin'</b>)
+
+def promote(self):
+    idx = self.ROLE_LADDER.index(self.normalized_role)
+    if idx &lt; len(self.ROLE_LADDER) - 1:
+        self.role = self.ROLE_LADDER[idx + 1]
+    return self.normalized_role</pre>
+      <p>An account moves one rung at a time. Promoting an administrator is a no-op rather than an error, demoting a guest is a no-op rather than an error, and an unrecognised role normalises to the bottom of the ladder before anything else happens to it. There is no code path anywhere that sets a role by assignment.</p>
+      <div class="w">
+        <div class="w-ctl"><span class="w-cl">Account</span>
+          <button type="button" data-lad="up">promote()</button>
+          <button type="button" data-lad="down">demote()</button>
+          <button type="button" data-lad="legacy">role = 'artist-guest'</button>
+        </div>
+        <div class="lad" id="lad">
+          <div data-r="guest"><b>guest</b><span>Browses the public gallery. Owns nothing.</span><em>you are here</em></div>
+          <div data-r="artist"><b>artist</b><span>Everything a guest can do, plus their own profile and their own work.</span><em>you are here</em></div>
+          <div data-r="admin"><b>admin</b><span>Everything, plus the 43 endpoints nobody else can reach.</span><em>you are here</em></div>
+        </div>
+        <div class="lad-msg" id="ladMsg">&nbsp;</div>
+      </div>
+      <p class="cap"><b>The ladder.</b> Press past either end and nothing happens, which is the behaviour rather than a guard bolted on afterwards. The third button writes a legacy value straight into the column, the way an older row in an existing database already has it.</p>
+      <p>That last case is worth more than it looks. An earlier version of the schema used <span class="warm">visitor</span> and <span class="warm">artist-guest</span>. Rather than migrate every row and hope none were missed, the model normalises on read, so an old value can never reach a comparison as itself, and a row nobody remembers cannot quietly become an unknown role that no check is written for.</p>
+      <p>The other detail is the front door. Registration does not accept a role, at all:</p>
+<pre># security fix: ignore any client-supplied role parameter
+# all new users are forced to 'guest' role to prevent privilege escalation
+<b>role = 'guest'</b></pre>
+      <p>The comment is the interesting part. It is a fix, which means at some point the endpoint read the role out of the request body, and anybody who could post JSON could have asked to be an administrator and been given it.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">03</div>
+      <h2>Two questions, not one</h2>
+      <p>Every protected endpoint asks two things, in order. Do you stand high enough on the ladder, and does the thing you are reaching for actually belong to you? A system that asks only the first lets any artist edit any other artist. A system that asks only the second has no administrators.</p>
+      <p>What makes it readable months later is that the refusal remembers <b>which</b> question failed:</p>
+<pre>if not current_user.is_admin:
+    if current_user.normalized_role != 'artist':
+        log_rbac_denial('artist', artist_id, <s>'insufficient_role'</s>)
+        return jsonify({'error': 'Permission denied'}), 403
+    if not is_artist_owner(artist):
+        log_rbac_denial('artist', artist_id, <s>'not_owner'</s>)
+        return jsonify({'error': 'Permission denied'}), 403</pre>
+      <p>Two different refusals, identical to whoever sent the request, and distinguishable in the audit log. The client is told nothing either way, because telling a caller that a record exists but is not theirs is itself a leak. But <span class="hot">insufficient_role</span> in the log means somebody is pushing on a door that was never going to open for them, and <span class="hot">not_owner</span> means somebody is in the right building and the wrong room, which is almost always a stale link rather than an attack. Collapse them into one 403 and you lose the ability to tell those apart for ever.</p>
+      <div class="w">
+        <div class="w-ctl"><span class="w-cl">Signed in as</span>
+          <button type="button" data-role="anon">anonymous</button>
+          <button type="button" data-role="guest">guest</button>
+          <button type="button" data-role="artist" class="on">artist</button>
+          <button type="button" data-role="admin">admin</button>
+        </div>
+        <div class="w-ctl"><span class="w-cl">Asking to</span>
+          <button type="button" data-act="browse">browse the gallery</button>
+          <button type="button" data-act="editown" class="on">edit your profile</button>
+          <button type="button" data-act="editother">edit another artist</button>
+          <button type="button" data-act="create">add your own work</button>
+          <button type="button" data-act="delart">delete an artwork</button>
+          <button type="button" data-act="orphan">delete an orphaned photo</button>
+          <button type="button" data-act="promote">promote a user</button>
+        </div>
+        <div class="req" id="pmReq"></div>
+        <div class="path" id="pmPath"></div>
+        <div id="pmVerd"></div>
+      </div>
+      <p class="cap"><b>The permission machine.</b> The checks and their order are taken from the endpoints themselves, so the panel cannot drift from the code it is describing. Every refusal shows the reason the server would have written to the audit log, which the caller never sees.</p>
+      <p>Two combinations here are worth pressing. An <b>administrator</b> never reaches the ownership question at all: the first branch is <span class="warm">if not current_user.is_admin</span>, so the whole check falls away rather than being passed. And deleting an artwork asks about the ladder not at all, only about ownership, because an account that owns a piece has earned the right to remove it whatever rung it is standing on.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">04</div>
+      <h2>Ownership is three hops</h2>
+      <p>No photo carries an owner. Neither does an artwork. One column in the whole schema records who something belongs to, <span class="warm">artist.user_id</span>, and everything else is resolved by walking towards it.</p>
+      <div class="hop" id="hop">
+        <div><b>photo</b><span>has an <i>artwork_num</i></span></div>
+        <div><b>artwork</b><span>has an <i>artist_id</i></span></div>
+        <div><b>artist</b><span>has a <i>user_id</i></span></div>
+        <div><b>you</b><span>are that <i>user_id</i>, or you are not</span></div>
+      </div>
+      <p class="cap"><b>The chain.</b> Three lookups per check, all of them primary key reads, and the answer is the comparison at the end.</p>
+      <p>Denormalising this would be faster and is the obvious thing to reach for. It is also how ownership quietly goes wrong: the day an artwork is reassigned to another artist, every copied owner column on every photo is stale, and a stale owner column is an authorisation bug rather than a display bug. Deriving it means there is exactly one fact, in one place, and moving a piece between artists moves everything that hangs off it in the same instant.</p>
+      <p>The chain also answers a question nobody remembered to ask. A photo whose artwork has been deleted out from under it has no first link, so it has no owner and no owner can ever be computed for it:</p>
+<pre>def is_photo_owner(photo):
+    <s># orphaned photos can only be managed by admins</s>
+    if photo.artwork_num is None:
+        <b>return False</b></pre>
+      <p>Every caller fails that check, including the artist who uploaded the file in the first place, which leaves administrators as the only accounts that can clear it up. That rule was never written as a rule. It falls out of a chain with nothing at the start of it, and getting behaviour like that for free is the argument for deriving ownership rather than storing it.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">05</div>
+      <h2>The address nobody can read</h2>
+      <p>The personal data here is thin, which is the point: e-mail addresses, and nothing else worth the trouble. But it sits in a Postgres volume that a backup copies and a laptop carries out of the building, and a gallery is not going to notice a missing laptop for a week.</p>
+      <p>So the column is encrypted with AES-GCM under a fresh random nonce every time it is written. Two accounts with the same address produce two ciphertexts with nothing in common, which matters more than it sounds: with a deterministic scheme, anybody holding a dump can see which rows match each other without decrypting a single one of them.</p>
+      <p>Which creates the obvious problem. If the same address encrypts differently every time, <span class="warm">WHERE email = ?</span> can never find anybody again. The answer is a second column beside it, a keyed HMAC-SHA256 of the normalised address, one way, deterministic and indexed. Logging in is still one index lookup. The index reveals nothing about the address unless you already hold the key.</p>
+      <div class="w">
+        <div class="w-ctl"><span class="w-cl">Register</span>
+          <button type="button" id="encGo">store the same address again</button>
+        </div>
+        <div class="enc">
+          <div><b>plaintext</b><code>alice@studio.local</code></div>
+          <div><b>row 1 ciphertext</b><code class="ct" id="ct1"></code></div>
+          <div><b>row 2 ciphertext</b><code class="ct" id="ct2"></code></div>
+          <div><b>blind index</b><code class="idx" id="ix1"></code></div>
+          <div><b>blind index</b><code class="idx" id="ix2"></code></div>
+        </div>
+        <div class="lad-msg" id="encMsg">&nbsp;</div>
+      </div>
+      <p class="cap"><b>Illustrative.</b> These bytes are drawn at random in your browser to show the shape of the thing: the ciphertexts never repeat, the indexes always agree. The real values come from AES-GCM and HMAC-SHA256 on the server, and the real index is the same 64 hex characters wide.</p>
+      <p>Two decisions around it are worth naming. The keys are derived with Argon2id at 64MB, three passes and four lanes, rather than a single hash, so a leaked key file is expensive to brute force rather than instant. And the encryption key is deliberately not derived from the session secret, with a comment in the module explaining why: if the two shared a source, stealing session cookies would also decrypt the database, and one bad afternoon would become two.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">06</div>
+      <h2>What the audit found</h2>
+      <p>The application was put through static analysis, a dependency scan and a manual penetration pass, and the result was written down rather than summarised away.</p>
+      <div class="score" id="score">
+        <div data-v="9"><b>Authorisation</b><u><s></s></u><em>9</em></div>
+        <div data-v="9"><b>Input validation</b><u><s></s></u><em>9</em></div>
+        <div data-v="9"><b>Output encoding</b><u><s></s></u><em>9</em></div>
+        <div data-v="8"><b>Authentication</b><u><s></s></u><em>8</em></div>
+        <div data-v="8"><b>Sessions</b><u><s></s></u><em>8</em></div>
+        <div data-v="8"><b>Error handling</b><u><s></s></u><em>8</em></div>
+        <div data-v="8"><b>Infrastructure</b><u><s></s></u><em>8</em></div>
+        <div data-v="7"><b>Cryptography</b><u><s></s></u><em>7</em></div>
+        <div data-v="7"><b>Dependencies</b><u><s></s></u><em>7</em></div>
+        <div data-v="8.1" class="tot"><b>Overall</b><u><s></s></u><em>8.1</em></div>
+      </div>
+      <p>Three critical findings, all of them mine, all of them fixed:</p>
+      <div class="find">
+        <div><b>C-01</b><span>The privacy page rendered stored HTML through Svelte&rsquo;s <span class="warm">@html</span>. That text is editable from the admin console, so an administrator could store a script and every visitor to the page would run it.</span><em>fixed</em></div>
+        <div><b>C-02</b><span>The same sink, on the terms page. Both now pass through DOMPurify with an allowed tag list before anything reaches the DOM.</span><em>fixed</em></div>
+        <div><b>C-03</b><span>Postgres published its port to the host in the compose file. On a gallery network that means the database answered to any machine in the building. The service now sits on an internal network with no published port at all.</span><em>fixed</em></div>
+        <div><b class="mid">M-01</b><span>One encrypted column is deterministic by design, so identical values are visibly identical in a dump. It is the trade-off that makes the lookup possible, and it is written down rather than buried.</span><em class="doc">documented</em></div>
+        <div><b class="mid">M-02</b><span>Password reset can be timed, which leaks whether an address is registered. A dummy bcrypt hash is compared when the account does not exist, which narrows the window without closing it.</span><em class="doc">documented</em></div>
+      </div>
+      <p>The two at the bottom are the ones I would want read. Neither is fixed. Both are real, both have a cost that was judged higher than the risk, and both are named in the report with the reasoning attached, because a security document that only lists the things that were easy to fix is not a security document.</p>
+      <p>Underneath all of it, the parts that were right from the start: bcrypt at twelve rounds, a fifteen minute lockout after five failed attempts, rate limits declared per endpoint, session regeneration on login, CSRF tokens, magic byte validation on every upload rather than trusting a file extension, and an audit log that every refusal writes to.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <div class="s">
+      <div class="s-n">07</div>
+      <h2>Five hundred and ninety nine tests</h2>
+      <p>Spread over twenty five files, and the interesting thing is which ones are the largest. They are not the ones that check a page renders.</p>
+      <div class="suites">
+        <div><b>test_restore</b><span><em>82</em> tests. Restoring a backup is the one operation that can destroy everything it touches.</span></div>
+        <div><b>test_reset_admin</b><span><em>57</em>. The account recovery path, which is a back door if it is wrong.</span></div>
+        <div><b>test_encryption</b><span><em>54</em>. Round trips, key rotation and the legacy fallback.</span></div>
+        <div><b>test_auth</b><span><em>48</em>. Registration, lockout, sessions and the forced guest role.</span></div>
+        <div><b>test_upload_utils</b><span><em>47</em>. Magic bytes, filenames, dimensions and quota.</span></div>
+        <div><b>test_xss_stress</b><span><em>24</em>. Payloads thrown at every field that survives a round trip.</span></div>
+        <div><b>test_rbac_rate_limits</b><span><em>20</em>. That the refusals themselves cannot be used as a probe.</span></div>
+        <div><b>test_artwork_ownership</b><span><em>18</em>. The three hops, and the orphan with nowhere to start.</span></div>
+        <div><b>test_security_pentest</b><span><em>16</em>. The findings above, kept as regressions.</span></div>
+      </div>
+      <p class="cap"><b>Weighted towards the dangerous parts.</b> Restore, recovery, encryption and authentication carry 241 of the 599 between them.</p>
+      <p>A gallery installs this once and then leaves it alone for a year, on a machine with no operator, behind a network with no route out and therefore no way for me to reach in and fix anything. That is the whole design constraint, and it is why the test count sits where it does. The wizard has a repair mode for the same reason.</p>
+    </div>
+
+    <div class="f-foot">
+      <a href="https://github.com/cjaron03/canvas-and-clay">github.com/cjaron03/canvas-and-clay</a>
+      <a class="back" href="../"><i>&larr;</i>jaronc.com</a>
+      <em>Canvas &amp; Clay</em>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   the wall. nine frames of assorted sizes hung off one line, drawn
+   here rather than written out by hand so the sizes can be irregular
+   without nine lines of markup saying so.
+   ================================================================ */
+(function () {
+  var g = document.getElementById('wallFrames');
+  if (!g) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  /* width, height, and the gap that follows. the eye reads an uneven
+     hang as a room and an even one as a chart. */
+  var F = [[46,34,26],[62,44,22],[38,30,30],[74,40,24],[44,36,26],
+           [58,46,22],[40,28,28],[66,38,24],[48,34,0]];
+  var x = 2, i, k, tot = 0;
+  for (i = 0; i < F.length; i++) tot += F[i][0] + F[i][2];
+  /* centre the hang under the masthead rather than starting it flush */
+  x = Math.max(2, (820 - tot) / 2);
+  for (i = 0; i < F.length; i++) {
+    var w = F[i][0], h = F[i][1];
+    var y = 57 - h;
+    var r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', x); r.setAttribute('y', y);
+    r.setAttribute('width', w); r.setAttribute('height', h);
+    r.setAttribute('fill', 'none');
+    r.setAttribute('stroke', '#22262f');
+    r.setAttribute('stroke-width', '1');
+    g.appendChild(r);
+    /* the lit interior, warm, and barely there. it is a wall in a dark
+       room, not a lightbox. */
+    var l = document.createElementNS(NS, 'rect');
+    l.setAttribute('class', 'lit');
+    l.setAttribute('x', x + 3); l.setAttribute('y', y + 3);
+    l.setAttribute('width', w - 6); l.setAttribute('height', h - 6);
+    l.setAttribute('fill', '#d9946b');
+    l.setAttribute('fill-opacity', (0.05 + (i % 3) * 0.022).toFixed(3));
+    l.style.animationDelay = (0.42 + i * 0.075).toFixed(3) + 's';
+    g.appendChild(l);
+    x += w + F[i][2];
+  }
+}());
+
+
+/* ================================================================
+   02. the ladder. promote and demote are ported straight across, and
+   the legacy button writes a value the ladder does not contain, so
+   the normalisation has something real to do.
+   ================================================================ */
+(function () {
+  var LADDER = ['guest', 'artist', 'admin'];
+  var LEGACY = { 'visitor': 'guest', 'artist-guest': 'artist' };
+  var box = document.getElementById('lad'), msg = document.getElementById('ladMsg');
+  if (!box) return;
+  var role = 'guest';
+
+  function normalised(r) { return LEGACY[r] || r; }
+
+  function draw(note) {
+    var n = normalised(role);
+    [].forEach.call(box.children, function (d) {
+      d.classList.toggle('here', d.getAttribute('data-r') === n);
+    });
+    msg.innerHTML = note || ('role = &#39;' + role + '&#39;');
+  }
+
+  function step(dir) {
+    var n = normalised(role);
+    var i = LADDER.indexOf(n);
+    if (i < 0) { role = LADDER[0]; draw('unknown role, normalised to &#39;guest&#39; first'); return; }
+    if (dir > 0 && i === LADDER.length - 1) { role = n; draw('already at the top. no-op, not an error.'); return; }
+    if (dir < 0 && i === 0) { role = n; draw('already at the bottom. no-op, not an error.'); return; }
+    role = LADDER[i + dir];
+    draw(null);
+  }
+
+  document.querySelector('[data-lad="up"]').onclick = function () { step(1); };
+  document.querySelector('[data-lad="down"]').onclick = function () { step(-1); };
+  document.querySelector('[data-lad="legacy"]').onclick = function () {
+    role = 'artist-guest';
+    draw('column says &#39;artist-guest&#39;, every check reads &#39;artist&#39;');
+  };
+  draw(null);
+}());
+
+
+/* ================================================================
+   03. the permission machine. the checks below are the checks in the
+   endpoints, in the order the endpoints run them, which is why the
+   panel is written as a decision rather than as a lookup table: a
+   table would let the page and the server disagree quietly.
+   ================================================================ */
+(function () {
+  var ACT = {
+    browse:    { m:'GET',    p:'/artworks',                     auth:false },
+    editown:   { m:'PATCH',  p:'/artists/&lt;id&gt;',             auth:true, rung:'artist', owns:true },
+    editother: { m:'PATCH',  p:'/artists/&lt;id&gt;',             auth:true, rung:'artist', owns:false },
+    create:    { m:'POST',   p:'/artworks',                     auth:true, rung:'artist', owns:true },
+    delart:    { m:'DELETE', p:'/artworks/&lt;id&gt;',            auth:true, ownerOnly:true },
+    orphan:    { m:'DELETE', p:'/photos/&lt;id&gt;',              auth:true, orphan:true },
+    promote:   { m:'POST',   p:'/admin/users/&lt;id&gt;/promote', auth:true, adminOnly:true }
+  };
+  var OK = { browse:'200', editown:'200', editother:'200', create:'201',
+             delart:'200', orphan:'200', promote:'200' };
+  var role = 'artist', act = 'editown';
+
+  var reqEl = document.getElementById('pmReq'),
+      pathEl = document.getElementById('pmPath'),
+      verdEl = document.getElementById('pmVerd');
+  if (!reqEl) return;
+
+  /* a step is a label, an outcome, and whether the server ever got to
+     ask it. 'skip' is drawn faint rather than left out, because the
+     shape of the check is part of what the panel is showing. */
+  function decide() {
+    var a = ACT[act], s = [], admin = (role === 'admin'), authed = (role !== 'anon');
+
+    if (!a.auth) {
+      s.push({ q:'is this endpoint public?', r:'pass', e:'yes' });
+      return { steps:s, code:OK[act], why:null };
+    }
+
+    s.push({ q:'@login_required <i>is there a session?</i>',
+             r:authed ? 'pass' : 'stop', e:authed ? 'yes' : '401' });
+    if (!authed) return { steps:s, code:'401', why:null, unauth:true };
+
+    s.push({ q:'is_admin <i>does the ladder stop here?</i>',
+             r:admin ? 'pass' : 'skip', e:admin ? 'yes, skip the rest' : 'no' });
+    if (admin) return { steps:s, code:OK[act], why:null, admin:true };
+
+    if (a.adminOnly) {
+      s.push({ q:'@admin_required <i>admin only, no owner to be</i>', r:'stop', e:'403' });
+      return { steps:s, code:'403', why:'insufficient_role' };
+    }
+
+    /* delete_artwork reads: if not is_admin and not is_artwork_owner(...).
+       there is no rung question in it at all, so the refusal a guest gets is
+       not_owner rather than insufficient_role. */
+    if (a.ownerOnly) {
+      var mine = (role === 'artist');
+      s.push({ q:'is_artwork_owner <i>artwork &rarr; artist &rarr; user_id</i>',
+               r:mine ? 'pass' : 'stop', e:mine ? 'yes' : '403' });
+      return mine ? { steps:s, code:OK[act], why:null, noRung:true }
+                  : { steps:s, code:'403', why:'not_owner', noRung:true };
+    }
+
+    if (a.orphan) {
+      s.push({ q:'is_photo_owner <i>does the photo have an artwork?</i>', r:'stop', e:'orphan' });
+      s.push({ q:'ownership cannot resolve, so nobody owns it', r:'stop', e:'403' });
+      return { steps:s, code:'403', why:'not_owner' };
+    }
+
+    var rung = (role === a.rung);
+    s.push({ q:'normalized_role == <i>&#39;' + a.rung + '&#39;</i>',
+             r:rung ? 'pass' : 'stop', e:rung ? 'yes' : '403' });
+    if (!rung) return { steps:s, code:'403', why:'insufficient_role' };
+
+    s.push({ q:'is_artist_owner <i>artist.user_id == current_user.id</i>',
+             r:a.owns ? 'pass' : 'stop', e:a.owns ? 'yes' : '403' });
+    if (!a.owns) return { steps:s, code:'403', why:'not_owner' };
+
+    return { steps:s, code:OK[act], why:null };
+  }
+
+  var WHY = {
+    insufficient_role: 'Wrong rung. The account was never going to be allowed this one.',
+    not_owner: 'Right rung, wrong record. Usually a stale link rather than an attack.'
+  };
+
+  function render() {
+    var a = ACT[act], d = decide();
+    var who = role === 'anon' ? 'no session' : role;
+    var ok = d.code.charAt(0) === '2';
+    reqEl.innerHTML = '<b>' + a.m + '</b> ' + a.p + '  <s>&middot;  as ' + who + '</s>';
+
+    pathEl.innerHTML = '';
+    d.steps.forEach(function (st, k) {
+      var div = document.createElement('div');
+      div.className = st.r;
+      div.innerHTML = '<u>' + (k + 1) + '</u><q>' + st.q + '</q><em>' + st.e + '</em>';
+      div.style.animationDelay = (k * 0.055).toFixed(3) + 's';
+      pathEl.appendChild(div);
+    });
+
+    var note;
+    if (d.unauth) note = 'No session at all, so there is nobody to be the wrong person.';
+    else if (d.admin) note = 'The check begins <i>if not current_user.is_admin</i>, so an administrator never reaches the ownership question.';
+    else if (d.noRung && ok) note = 'One question, and the ladder was never part of it. Owning the piece is the whole of the permission.';
+    else if (d.noRung) note = 'This endpoint never asks about the ladder at all, only about ownership, so a guest is refused as <i>not_owner</i> rather than <i>insufficient_role</i>.';
+    else if (d.why) note = WHY[d.why];
+    else note = 'Both questions answered. The request is served.';
+
+    verdEl.innerHTML = '<div class="verd ' + (ok ? 'ok' : 'no') + '"><b>' + d.code + '</b>' +
+      '<span>' + note.replace(/<i>/g, '<code>').replace(/<\/i>/g, '</code>') + '</span>' +
+      (d.why ? '<code>log_rbac_denial(&hellip;, &#39;' + d.why + '&#39;)</code>' : '') + '</div>';
+    verdEl.firstChild.style.animationDelay = (d.steps.length * 0.055 + 0.06).toFixed(3) + 's';
+  }
+
+  function wire(attr, set) {
+    var bs = document.querySelectorAll('[' + attr + ']');
+    [].forEach.call(bs, function (b) {
+      b.onclick = function () {
+        [].forEach.call(bs, function (o) { o.classList.remove('on'); });
+        b.classList.add('on');
+        set(b.getAttribute(attr));
+        render();
+      };
+    });
+  }
+  wire('data-role', function (v) { role = v; });
+  wire('data-act', function (v) { act = v; });
+  render();
+}());
+
+
+/* ================================================================
+   05. the two ciphertexts. the bytes are random, and the page says so
+   in the caption: what is being demonstrated is that two writes of one
+   address never match while their indexes always do.
+   ================================================================ */
+(function () {
+  var go = document.getElementById('encGo'), msg = document.getElementById('encMsg');
+  if (!go) return;
+  var HEX = '0123456789abcdef';
+
+  function hex(n) {
+    var s = '', i;
+    for (i = 0; i < n; i++) s += HEX.charAt(Math.floor(Math.random() * 16));
+    return s;
+  }
+
+  /* the real column is a 12 byte nonce, the ciphertext, then a 16 byte
+     tag, so the shape shown here is the shape stored there. */
+  function cipher() { return hex(24) + hex(36) + hex(32); }
+
+  /* the index is keyed and deterministic, so it is drawn once and kept */
+  var IDX = hex(64);
+
+  function paint(first) {
+    ['ct1', 'ct2'].forEach(function (id) {
+      document.getElementById(id).textContent = cipher();
+    });
+    document.getElementById('ix1').textContent = IDX;
+    document.getElementById('ix2').textContent = IDX;
+    msg.innerHTML = first
+      ? 'two rows, one address'
+      : 'ciphertexts changed. indexes did not, and the login still resolves in one lookup.';
+  }
+
+  go.onclick = function () {
+    var cts = [document.getElementById('ct1'), document.getElementById('ct2')];
+    cts.forEach(function (c) { c.classList.add('roll'); });
+    paint(false);
+    setTimeout(function () {
+      cts.forEach(function (c) { c.classList.remove('roll'); });
+    }, 260);
+  };
+  paint(true);
+}());
+
+
+/* ================================================================
+   motion. the reveals and the score bars. the .mo class was set in the
+   head before the first paint; without it reduced motion is on, or
+   there is no observer, and this whole block stands down and leaves a
+   page that was already complete without it.
+   ================================================================ */
+(function () {
+  if (!document.documentElement.classList.contains('mo')) return;
+  var vh = window.innerHeight || 800;
+
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    });
+    /* a threshold in area cannot be relied on here: a section tall enough
+       to outrun the viewport never reaches a fraction of its own height,
+       so the trigger is the top edge crossing the last tenth of the screen. */
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0 });
+
+  /* arm only what is still below the fold. hiding something the reader can
+     already see, in order to fade it back in, is the one way a reveal comes
+     out worse than no reveal at all. */
+  function arm(el, cls) {
+    if (!el || el.getBoundingClientRect().top < vh * 0.9) return false;
+    el.classList.add(cls);
+    io.observe(el);
+    return true;
+  }
+
+  [].forEach.call(document.querySelectorAll('.s'), function (s) { arm(s, 'rv'); });
+  arm(document.getElementById('lad'), 'armed');
+  arm(document.getElementById('hop'), 'armed');
+
+  var sc = document.getElementById('score');
+  if (sc && arm(sc, 'armed')) {
+    [].forEach.call(sc.children, function (d, k) {
+      var v = parseFloat(d.getAttribute('data-v')) / 10;
+      var bar = d.querySelector('s');
+      bar.style.setProperty('--to', v);
+      bar.style.animationDelay = (0.04 + k * 0.05).toFixed(3) + 's';
+    });
+  }
+
+  /* the facts count in behind the masthead. each one starts at the
+     smallest number carrying the same count of digits, so the row never
+     changes width part way through and nothing under it moves. */
+  function count(b, ms, wait) {
+    var raw = b.textContent, n = parseFloat(raw.replace(/,/g, ''));
+    if (!isFinite(n)) return;
+    var from = Math.pow(10, String(Math.round(n)).length - 1);
+    if (from > n) from = 0;
+    var t0 = 0;
+    function step(t) {
+      if (!t0) t0 = t;
+      var k = Math.min(1, (t - t0) / ms);
+      var e = 1 - Math.pow(1 - k, 3);
+      b.textContent = Math.round(from + (n - from) * e).toLocaleString('en-GB');
+      if (k < 1) requestAnimationFrame(step); else b.textContent = raw;
+    }
+    setTimeout(function () { requestAnimationFrame(step); }, wait);
+  }
+  [].forEach.call(document.querySelectorAll('.f-facts span b'), function (b, k) {
+    count(b, 760, 420 + k * 70);
+  });
+}());
+</script>
+</body></html>

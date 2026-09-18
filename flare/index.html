@@ -71,9 +71,12 @@
   .s p .hot { color:#fb7185; }
 
   /* the caption voice, used under every figure */
-  .cap { font-family:ui-monospace,Menlo,monospace; font-size:10.5px; line-height:1.72;
+  /* .s p is one class and one element, so a bare .cap loses to it and the
+     caption comes out at prose size in prose colour. the second selector
+     is only here to outrank it. */
+  .cap, .s p.cap { font-family:ui-monospace,Menlo,monospace; font-size:10.5px; line-height:1.72;
          letter-spacing:.04em; color:#565d69; margin:12px 0 0; max-width:44em; }
-  .cap b { color:#7d8593; font-weight:400; }
+  .cap b, .s p.cap b { color:#7d8593; font-weight:400; }
 
   /* ---- the architecture list ---- */
   .arch { margin:24px 0 0; }
@@ -254,6 +257,11 @@
 
   @media (max-width:760px) {
     .f { padding:40px 20px 0; }
+    /* the name must not break across two lines under its own underline,
+       and the label on the right reads as a label when it is flush right. */
+    .f-top { gap:14px; }
+    .f-top a.back { white-space:nowrap; }
+    .f-top span { text-align:right; }
     .f h1 { font-size:36px; }
     .s h2 { font-size:22px; }
     .arch div { flex-direction:column; gap:7px; }
