@@ -252,7 +252,7 @@
 
     <div class="f-facts">
       <span><b>4</b> projects</span>
-      <span><b id="c-all">701</b> commits</span>
+      <span><b id="c-all">722</b> commits</span>
       <span>Java &middot; Python &middot; Svelte &middot; Jupyter</span>
       <span>NeoForge &middot; Flask &middot; Docker &middot; Postgres</span>
       <span><b>2025</b> to <b>2026</b></span>
@@ -273,7 +273,7 @@
           <p>Earth left the solar system. You&rsquo;re still on it.<br>The Architect is learning.<br>Sometimes it&rsquo;s wrong. It knows that.</p>
           <div class="f-lk"><a class="key" href="https://frozendawn.jaronc.com/">Read the journal</a><a href="https://github.com/cjaron03/frozen-dawn">Source</a></div>
         </div>
-        <span class="f-mt"><b id="c-fd">545</b>Java, NeoForge<s>commits on main</s></span>
+        <span class="f-mt"><b id="c-fd">566</b>Java, NeoForge<s>commits, every branch</s></span>
       </div>
 
       <div class="f-row">
@@ -365,14 +365,22 @@
 <script>
 var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---- the counts are live.
+/* ---- the counts are live, except one.
         github does not expose a commit count, but asking for one commit a
         page makes the last page number the count, and it comes back in the
         Link header. one unauthenticated request per repo.
         the numbers already in the markup are the fallback, correct as of
-        deploy, so the page is never blank and never waits on a network. ---- */
-var REPO = [['frozen-dawn', 'c-fd'], ['flare-plus', 'c-fp'],
-            ['canvas-and-clay', 'c-cc'], ['Heart-Disease-Predictor', 'c-hd']];
+        deploy, so the page is never blank and never waits on a network.
+
+        frozen-dawn is not in this list. the call can only count one branch,
+        and that repo has a long lived one: main is 545 while the work
+        actually done is 566. the journal charts all of it and says 566, so
+        a live 545 here would have the same project wearing two different
+        numbers on two sites of mine. its count is typed into the markup
+        instead and goes stale until the next deploy, which is the cheaper
+        of the two problems. ---- */
+var REPO = [['flare-plus', 'c-fp'], ['canvas-and-clay', 'c-cc'],
+            ['Heart-Disease-Predictor', 'c-hd']];
 
 Promise.all(REPO.map(function (r) {
   return fetch('https://api.github.com/repos/cjaron03/' + r[0] +
@@ -387,10 +395,13 @@ Promise.all(REPO.map(function (r) {
     .catch(function () { return null; });   /* the markup's number stands */
 })).then(function (n) {
   /* the total is only replaced if every repo answered, because a sum with
-     one number missing is worse than a slightly stale one. */
+     one number missing is worse than a slightly stale one. frozen-dawn is
+     read back out of the markup rather than typed again here, so the two
+     places that number appears cannot drift apart. */
   if (n.every(function (v) { return v !== null; })) {
     document.getElementById('c-all').textContent =
-      n.reduce(function (a, b) { return a + b; }, 0);
+      n.reduce(function (a, b) { return a + b; },
+               +document.getElementById('c-fd').textContent);
   }
 });
 
